@@ -1,0 +1,75 @@
+# ============================================================
+#  .github/dependabot.yml
+#
+#  Keeps dependencies automatically up to date via pull requests.
+#
+#  Ecosystems monitored:
+#    - github-actions  — Actions used in all workflows
+#    - docker          — Base image in Dockerfile.dev
+#
+#  Schedule:
+#    Weekly on Monday 09:00 UTC — low noise, predictable cadence.
+#
+#  Target branch: main
+#    PRs are opened directly against main.
+#    Using `develop` is intentionally avoided: Dependabot validates
+#    that the target branch exists at the time it opens a PR. If
+#    `develop` is deleted or has never been created, every Dependabot
+#    entry silently stops working. Targeting main is always safe.
+#
+#    If you later adopt a permanent develop branch, set
+#    target-branch: "develop" in both entries below and Dependabot
+#    will route PRs there automatically — no other change needed.
+#
+#  rebase-strategy: auto
+#    Dependabot will rebase its own PRs whenever main moves ahead,
+#    keeping them conflict-free without any manual intervention.
+# ============================================================
+
+version: 2
+
+updates:
+
+  # ── GitHub Actions ────────────────────────────────────────
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    target-branch: "main"
+    rebase-strategy: "auto"
+    assignees:
+      - "alihaidar0"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    groups:
+      github-actions-all:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 5
+
+  # ── Docker base image ─────────────────────────────────────
+  - package-ecosystem: "docker"
+    directory: "/docker"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    target-branch: "main"
+    rebase-strategy: "auto"
+    assignees:
+      - "alihaidar0"
+    commit-message:
+      prefix: "build"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "docker"
+    open-pull-requests-limit: 3

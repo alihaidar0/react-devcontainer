@@ -1,0 +1,57 @@
+# ============================================================
+#  .github/workflows/labels.yml
+#
+#  Syncs .github/labels.yml to GitHub repository labels.
+#
+#  Action: EndBug/label-sync@v2
+#  Repo:   https://github.com/EndBug/label-sync
+#
+#  Behaviour:
+#    - Creates labels that exist in the file but not on GitHub
+#    - Updates color and description of labels that already exist
+#    - Does NOT delete labels removed from the file (safe default —
+#      removing a label from GitHub also removes it from all open
+#      issues and PRs, which is almost never what you want)
+#
+#  Triggers:
+#    - Push to main when .github/labels.yml changes
+#    - Manual dispatch — run any time to force a full re-sync
+#
+#  First-time setup:
+#    Go to Actions → Labels → Run workflow to bootstrap all labels.
+#    After that it maintains itself automatically.
+#
+#  Required permission:
+#    issues: write — needed to create and update labels via the API.
+#    The built-in GITHUB_TOKEN is sufficient — no PAT required.
+# ============================================================
+
+name: Labels
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/labels.yml"
+  workflow_dispatch:
+
+jobs:
+  sync:
+    name: Sync labels to GitHub
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/labels.yml
+
+      - name: Sync labels
+        uses: EndBug/label-sync@v2
+        with:
+          config-file: .github/labels.yml
+          token: ${{ secrets.GITHUB_TOKEN }}

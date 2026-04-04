@@ -1,0 +1,149 @@
+# ============================================================
+#  React Dev Image — Node 24 LTS · pnpm · Bun · GitHub CLI
+#
+#  PHILOSOPHY: Blank canvas.
+#  Provides the full developer environment — Node, pnpm, Bun,
+#  tools, shell. Installs NO React project packages globally.
+#  Project dependencies are installed per project with pnpm.
+#
+#  Pre-installed (environment tools only):
+#    ✓ Node.js 24 LTS (node:24-bookworm-slim)
+#    ✓ pnpm 10.33.0  — fast, disk-efficient package manager
+#    ✓ Bun 1.3.11    — ultra-fast JS runtime & bundler
+#    ✓ Git + GitHub CLI (gh)
+#    ✓ openssh-client
+#    ✓ TypeScript + tsx (run TS files directly, no compile step)
+#    ✓ npm-check-updates (interactive dependency upgrade tool)
+#    ✓ Starship prompt + React/pnpm/git aliases
+#
+#  NOT pre-installed (install per project with pnpm add):
+#    ✗ React / ReactDOM
+#    ✗ Vite / Next.js / Remix
+#    ✗ TanStack Query, Zustand, React Router
+#    ✗ Tailwind CSS, shadcn/ui
+#    ✗ ESLint, Prettier, Biome  — project-specific, version-sensitive
+#    ✗ knip                     — project-analysis tool, install locally
+#    ✗ Any project-specific package
+# ============================================================
+
+# ── Global build args ────────────────────────────────────────
+# Declared before the first FROM so NODE_VERSION is available
+# inside FROM lines across all stages (global ARG scope).
+# The workflow passes NODE_VERSION=24 via --build-arg.
+# Re-declared after the base stage FROM so it is also accessible
+# inside that stage's RUN / ENV / LABEL instructions.
+ARG NODE_VERSION=24
+
+# ── Stage 1: copy the Bun binary from the official image ─────
+# Pinned version — Dependabot tracks this FROM line automatically.
+# This is the recommended pattern for injecting a runtime binary
+# without running a curl-pipe-bash installer inside the build.
+FROM oven/bun:1.3.11-slim AS bun-binary
+
+# ── Stage 2: the actual dev image ────────────────────────────
+# Explicit OS codename (bookworm) so Dependabot can track the
+# base image and so the OS never silently drifts to a new Debian
+# release between builds.
+# Re-declare NODE_VERSION here so it is in scope inside this stage.
+ARG NODE_VERSION
+FROM node:${NODE_VERSION}-bookworm-slim AS base
+
+LABEL org.opencontainers.image.title="React Dev Container"
+LABEL org.opencontainers.image.description="Blank-canvas React development environment — Node 24 LTS, pnpm, Bun, GitHub CLI — Windows · Linux · macOS"
+LABEL org.opencontainers.image.authors="Ali Haidar"
+LABEL org.opencontainers.image.source="https://github.com/alihaidar0/react-devcontainer"
+
+# ── Runtime environment ──────────────────────────────────────
+ENV NODE_ENV=development \
+    PNPM_HOME=/root/.local/share/pnpm \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    PATH="/root/.local/share/pnpm:/usr/local/bin:$PATH"
+
+# ── System packages ──────────────────────────────────────────
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # SSH — required for git push/pull via SSH from inside the container
+    openssh-client \
+    # Source control and utilities
+    git git-lfs curl wget unzip jq vim nano htop tree \
+    # Network diagnostics
+    iputils-ping dnsutils netcat-openbsd \
+    # Process inspection
+    procps \
+    # Build tools — required by node-gyp for native Node modules
+    # (python3 here is a node-gyp compile dependency, not a language runtime)
+    build-essential python3 \
+    # TLS + GPG — needed to add the GitHub CLI apt repository
+    ca-certificates gnupg \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# ── pnpm — pinned standalone install ────────────────────────
+# Using the standalone installer (not Corepack) because:
+#   - Corepack is still marked experimental in Node.js docs
+#   - Corepack is designed for project-level enforcement, not image baking
+#   - Standalone gives us one authoritative pnpm with no Corepack shadowing
+# Pinned to an exact version so Dependabot can raise PRs on updates.
+ENV PNPM_VERSION=10.33.0
+RUN curl -fsSL https://get.pnpm.io/install.sh | bash -
+
+# ── Bun — copied from official image (reproducible, pinned) ─
+# Copying the binary from the oven/bun image is more reproducible
+# than curl-pipe-bash: the FROM line above is pinned and tracked
+# by Dependabot. No installer script runs inside this image.
+COPY --from=bun-binary /usr/local/bin/bun /usr/local/bin/bun
+
+# ── GitHub CLI (gh) ─────────────────────────────────────────
+# Useful for: gh pr create, gh run watch, gh repo clone, gh auth login
+# All GitHub operations from inside the container without leaving the terminal.
+RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+    | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+    && chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+    | tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends gh \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# ── Global developer tools ───────────────────────────────────
+# Only tools that are genuinely project-agnostic belong here.
+#
+# typescript + tsx: compile and run TS files directly — these are
+#   environment tools, not project dependencies. A global tsc is
+#   needed for shell scripts and one-off TS execution.
+#
+# npm-check-updates (ncu): reads any package.json and checks npm
+#   for newer versions. Pure utility with no project-specific config.
+#
+# esbuild approve-builds: pnpm 10+ blocks post-install scripts by
+#   default as a security measure. esbuild (a dependency of tsx)
+#   requires its post-install script to compile its native binary.
+#   Approving it explicitly here is the correct fix — equivalent to
+#   running `pnpm approve-builds -g esbuild` interactively.
+#
+# NOT included globally (install per project with pnpm add -D):
+#   Biome, ESLint, Prettier — configs and versions are project-specific.
+#     Baking one version globally creates silent version mismatches.
+#   knip — project-analysis tool that reads tsconfig, package.json,
+#     entry points, and workspace config. Must be local to be accurate.
+RUN pnpm add -g \
+    typescript \
+    tsx \
+    npm-check-updates \
+    && pnpm approve-builds -g esbuild
+
+# ── Shell customization (Starship prompt + aliases) ──────────
+# shell_setup.sh uses bash-specific options (set -euo pipefail, heredocs).
+# The #!/bin/bash shebang ensures it runs under bash, not dash
+# (/bin/sh on Debian is dash, which does not support pipefail).
+COPY scripts/shell_setup.sh /tmp/shell_setup.sh
+RUN chmod +x /tmp/shell_setup.sh && /tmp/shell_setup.sh
+
+WORKDIR /workspace
+
+# Vite dev server — 0.0.0.0 binding is required for Docker port forwarding
+EXPOSE 5173
+
+# Keep the container alive — VS Code Dev Container attaches to this process
+CMD ["sleep", "infinity"]
