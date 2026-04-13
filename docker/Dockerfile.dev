@@ -38,7 +38,7 @@ ARG NODE_VERSION=24
 # Pinned version — Dependabot tracks this FROM line automatically.
 # This is the recommended pattern for injecting a runtime binary
 # without running a curl-pipe-bash installer inside the build.
-FROM oven/bun:1.3.11-slim AS bun-binary
+FROM oven/bun:1.3.12-slim AS bun-binary
 
 # ── Stage 2: the actual dev image ────────────────────────────
 # Explicit OS codename (bookworm) so Dependabot can track the
