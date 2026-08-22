@@ -89,6 +89,11 @@ alias ll="ls -alFh --color=auto"
 alias la="ls -A --color=auto"
 alias cls="clear"
 
+# ── Repomix aliases ───────────────────────────────────────────
+alias rx="repomix"
+alias rxp="repomix --output repomix-output.xml --ignore 'node_modules,dist,.next,coverage,*.log'"
+alias rxc="repomix --output repomix-output.xml --compress --ignore 'node_modules,dist,.next,coverage,*.log'"
+
 # ── Environment ───────────────────────────────────────────────
 export TERM=xterm-256color
 export CLICOLOR=1

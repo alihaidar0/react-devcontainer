@@ -1,0 +1,87 @@
+diff --git a/.dockerignore b/.dockerignore
+index 0251d5f..44766e1 100644
+--- a/.dockerignore
++++ b/.dockerignore
+@@ -12,6 +12,7 @@ docs/
+ # ── OS ───────────────────────────────────────────────────────
+ .DS_Store
+ Thumbs.db
++Desktop.ini
+ 
+ # ── Editor ───────────────────────────────────────────────────
+ .vscode/
+diff --git a/README.md b/README.md
+index 17b2b71..3551020 100644
+--- a/README.md
++++ b/README.md
+@@ -6,11 +6,11 @@
+ **Node.js 24 LTS · pnpm 10 · Bun · TypeScript · GitHub CLI · Starship**
+ 
+ [![Docker Build](https://github.com/alihaidar0/react-devcontainer/actions/workflows/docker.yml/badge.svg)](https://github.com/alihaidar0/react-devcontainer/actions/workflows/docker.yml)
+-[![Docker Pulls](https://img.shields.io/docker/pulls/alihaidar0/react-devcontainer)](https://hub.docker.com/r/alihaidar0/react-devcontainer)
+-[![Image Size](https://img.shields.io/docker/image-size/alihaidar0/react-devcontainer/latest)](https://hub.docker.com/r/alihaidar0/react-devcontainer)
++[![Docker Pulls](https://img.shields.io/docker/pulls/alihaidar199527/react-devcontainer)](https://hub.docker.com/r/alihaidar199527/react-devcontainer)
++[![Image Size](https://img.shields.io/docker/image-size/alihaidar199527/react-devcontainer/latest)](https://hub.docker.com/r/alihaidar199527/react-devcontainer)
+ 
+ ```bash
+-docker pull alihaidar0/react-devcontainer:latest
++docker pull alihaidar199527/react-devcontainer:latest
+ ```
+ 
+ ---
+@@ -311,7 +311,7 @@ RUN pnpm add -g \
+ 
+ ```yaml
+ env:
+-  IMAGE_NAME: alihaidar0/react-devcontainer
++  IMAGE_NAME: alihaidar199527/react-devcontainer
+ ```
+ 
+ The Docker Hub username is not sensitive — hardcoding it removes the dependency on secrets for the image name entirely. The `DOCKERHUB_TOKEN` secret is still used for login, but that step is already gated with `if: github.event_name != 'pull_request'` and is never reached during PR builds.
+diff --git a/docker/Dockerfile.dev b/docker/Dockerfile.dev
+index 7c91007..dcf7f3f 100644
+--- a/docker/Dockerfile.dev
++++ b/docker/Dockerfile.dev
+@@ -14,6 +14,7 @@
+ #    ✓ openssh-client
+ #    ✓ TypeScript + tsx (run TS files directly, no compile step)
+ #    ✓ npm-check-updates (interactive dependency upgrade tool)
++#    ✓ repomix       — pack repo to XML/text for AI code review
+ #    ✓ Starship prompt + React/pnpm/git aliases
+ #
+ #  NOT pre-installed (install per project with pnpm add):
+@@ -116,6 +117,10 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+ # npm-check-updates (ncu): reads any package.json and checks npm
+ #   for newer versions. Pure utility with no project-specific config.
+ #
++# repomix: packs a repo (or subtree) into a single XML/plain-text
++#   file for AI-assisted code review and analysis. Project-agnostic
++#   — reads any directory and needs no per-project config to be useful.
++#
+ # esbuild approve-builds: pnpm 10+ blocks post-install scripts by
+ #   default as a security measure. esbuild (a dependency of tsx)
+ #   requires its post-install script to compile its native binary.
+@@ -131,6 +136,7 @@ RUN pnpm add -g \
+     typescript \
+     tsx \
+     npm-check-updates \
++    repomix \
+     && pnpm approve-builds -g esbuild
+ 
+ # ── Shell customization (Starship prompt + aliases) ──────────
+diff --git a/scripts/shell_setup.sh b/scripts/shell_setup.sh
+index fa14ddc..b7bc896 100644
+--- a/scripts/shell_setup.sh
++++ b/scripts/shell_setup.sh
+@@ -89,6 +89,11 @@ alias ll="ls -alFh --color=auto"
+ alias la="ls -A --color=auto"
+ alias cls="clear"
+ 
++# ── Repomix aliases ───────────────────────────────────────────
++alias rx="repomix"
++alias rxp="repomix --output repomix-output.xml --ignore 'node_modules,dist,.next,coverage,*.log'"
++alias rxc="repomix --output repomix-output.xml --compress --ignore 'node_modules,dist,.next,coverage,*.log'"
++
+ # ── Environment ───────────────────────────────────────────────
+ export TERM=xterm-256color
+ export CLICOLOR=1

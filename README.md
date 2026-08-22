@@ -6,11 +6,11 @@
 **Node.js 24 LTS · pnpm 10 · Bun · TypeScript · GitHub CLI · Starship**
 
 [![Docker Build](https://github.com/alihaidar0/react-devcontainer/actions/workflows/docker.yml/badge.svg)](https://github.com/alihaidar0/react-devcontainer/actions/workflows/docker.yml)
-[![Docker Pulls](https://img.shields.io/docker/pulls/alihaidar0/react-devcontainer)](https://hub.docker.com/r/alihaidar0/react-devcontainer)
-[![Image Size](https://img.shields.io/docker/image-size/alihaidar0/react-devcontainer/latest)](https://hub.docker.com/r/alihaidar0/react-devcontainer)
+[![Docker Pulls](https://img.shields.io/docker/pulls/alihaidar199527/react-devcontainer)](https://hub.docker.com/r/alihaidar199527/react-devcontainer)
+[![Image Size](https://img.shields.io/docker/image-size/alihaidar199527/react-devcontainer/latest)](https://hub.docker.com/r/alihaidar199527/react-devcontainer)
 
 ```bash
-docker pull alihaidar0/react-devcontainer:latest
+docker pull alihaidar199527/react-devcontainer:latest
 ```
 
 ---
@@ -311,7 +311,7 @@ RUN pnpm add -g \
 
 ```yaml
 env:
-  IMAGE_NAME: alihaidar0/react-devcontainer
+  IMAGE_NAME: alihaidar199527/react-devcontainer
 ```
 
 The Docker Hub username is not sensitive — hardcoding it removes the dependency on secrets for the image name entirely. The `DOCKERHUB_TOKEN` secret is still used for login, but that step is already gated with `if: github.event_name != 'pull_request'` and is never reached during PR builds.

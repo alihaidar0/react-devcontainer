@@ -14,6 +14,7 @@
 #    ✓ openssh-client
 #    ✓ TypeScript + tsx (run TS files directly, no compile step)
 #    ✓ npm-check-updates (interactive dependency upgrade tool)
+#    ✓ repomix       — pack repo to XML/text for AI code review
 #    ✓ Starship prompt + React/pnpm/git aliases
 #
 #  NOT pre-installed (install per project with pnpm add):
@@ -116,6 +117,10 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
 # npm-check-updates (ncu): reads any package.json and checks npm
 #   for newer versions. Pure utility with no project-specific config.
 #
+# repomix: packs a repo (or subtree) into a single XML/plain-text
+#   file for AI-assisted code review and analysis. Project-agnostic
+#   — reads any directory and needs no per-project config to be useful.
+#
 # esbuild approve-builds: pnpm 10+ blocks post-install scripts by
 #   default as a security measure. esbuild (a dependency of tsx)
 #   requires its post-install script to compile its native binary.
@@ -131,6 +136,7 @@ RUN pnpm add -g \
     typescript \
     tsx \
     npm-check-updates \
+    repomix \
     && pnpm approve-builds -g esbuild
 
 # ── Shell customization (Starship prompt + aliases) ──────────
